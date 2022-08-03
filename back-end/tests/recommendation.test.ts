@@ -2,6 +2,7 @@ import app from '../src/app.js';
 import supertest from 'supertest';
 import { prisma } from '../src/database.js';
 import { createRecommendation } from './factories/recommendation.js';
+import { seed } from '../prisma/seed/seed.js';
 
 const agent = supertest(app);
 
@@ -41,7 +42,7 @@ describe("POST Integration Tests /recommendation", () => {
     expect(upvoteRecommendation.score).toEqual(insertRecommendation.score + 1);
   })
 
-  it('should return 200 and persisthe the downvote given a valid recommendation', async () => {
+  it('should return 200 and persiste the downvote given a valid recommendation', async () => {
     const recommendation = await createRecommendation();
 
     const insertRecommendation = await prisma.recommendation.create({
@@ -59,5 +60,34 @@ describe("POST Integration Tests /recommendation", () => {
 });
 
 describe("GET Integration Tests /recommendation", () => {
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+  beforeAll(async () => {
+    await prisma.$executeRaw`TRUNCATE TABLE "recommendations";`;
+  });
+  seed();
 
+  it('list all recommendations', async () => {
+    const response = await agent.get("/recommendations");
+
+    expect(response.body).not.toBeNull();
+  })
+
+  it('should get a random recommendation', async () => {
+    const response = await agent.get("/recommendations/random");
+
+    expect(response.body).toHaveProperty("name");
+  })
+
+  it('should get a recommendation by id', async () => {
+    const response = await agent.get(`/recommendations/1`);
+    expect(response.body).toHaveProperty("name");
+    expect(response.body.name).toBe("Itsári");
+  })
+
+  it('It should return a list of the 10 most voted recommendations', async () => {
+    const response = await agent.get(`/recommendations/top/10`);
+    expect(response.body.length).toEqual(10);
+  })
 });

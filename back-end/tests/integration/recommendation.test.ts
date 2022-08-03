@@ -1,12 +1,12 @@
-import app from '../src/app.js';
+import app from '../../src/app.js';
 import supertest from 'supertest';
-import { prisma } from '../src/database.js';
+import { prisma } from '../../src/database.js';
 import { createRecommendation } from './factories/recommendation.js';
-import { seed } from '../prisma/seed/seed.js';
+import { seed } from '../../prisma/seed/seed.js';
 
 const agent = supertest(app);
 
-describe("POST Integration Tests /recommendation", () => {
+describe("POST", () => {
   afterAll(async () => {
     await prisma.$disconnect();
   });
@@ -77,7 +77,7 @@ describe("GET Integration Tests /recommendation", () => {
   it('should get a random recommendation', async () => {
     const response = await agent.get("/recommendations/random");
 
-    expect(response.body).toHaveProperty("name");
+    expect(response.body).toHaveProperty("score");
   })
 
   it('should get a recommendation by id', async () => {
